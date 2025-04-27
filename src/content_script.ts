@@ -1,5 +1,3 @@
-// src/content_script.ts
-
 function getSelectedText(): string {
   const selection = window.getSelection();
   if (selection) {
@@ -10,7 +8,6 @@ function getSelectedText(): string {
 
 console.log("Flashcard Content Script Loaded!");
 
-// Variable MUST be declared before use
 let lastSelectedText: string | null = null;
 
 document.addEventListener('mouseup', () => {
@@ -29,7 +26,7 @@ document.addEventListener('mouseup', () => {
 
 // --- Listener for messages FROM the popup ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Keep the logging - it's useful
+  //logging for checking errors
   console.log("!!! CS Received Message! Type:", message?.type, "From:", sender?.origin);
 
   if (message.type === "POPUP_GET_SELECTED_TEXT") {
@@ -37,14 +34,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Access lastSelectedText correctly
     console.log("!!! CS -> Sending back:", lastSelectedText);
 
-    // >>> UNCOMMENT THE NEXT LINE <<<
+    
     sendResponse({ text: lastSelectedText });
 
     // Optional: Clear text after sending if you only want it retrieved once
     // lastSelectedText = null;
 
-    // >>> UNCOMMENT THE NEXT LINE <<<
-    // Indicate you intend to send a response asynchronously. Crucial!
+    
+    
     return true;
   }
   // For other message types, implicitly return undefined (no async response needed)
