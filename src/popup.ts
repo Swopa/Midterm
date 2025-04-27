@@ -1,5 +1,4 @@
-// src/popup.ts
-import { Flashcard } from './types'; // Ensure this is uncommented
+import { Flashcard } from './types'; 
 
 console.log("Popup script loaded!");
 
@@ -27,7 +26,7 @@ function updateDisplay(text: string | null) {
   }
 }
 
-// --- Optional: Function to update card count display ---
+
 function updateCardCountDisplay() {
     if (cardCountElement) {
         cardCountElement.textContent = `Total Cards: ${loadedFlashcards.length}`;
@@ -85,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <<<--- Make DOMCo
   // Request the selected text when the popup loads
   requestSelectedText(); // Can run concurrently
 
-  // --- Task 1.31: Load existing cards ---
+  //load existing cards
   try {
     const storageKey = 'flashcards';
     console.log('Attempting to load cards from storage...');
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <<<--- Make DOMCo
     loadedFlashcards = data?.[storageKey] || []; // Assign to global variable
     console.log(`Loaded ${loadedFlashcards.length} cards successfully.`);
 
-    // --- Task 1.33: Initial display of card count ---
+    //display card count
     updateCardCountDisplay(); // Update display based on loaded cards
 
   } catch (error) {
@@ -102,13 +101,13 @@ document.addEventListener('DOMContentLoaded', async () => { // <<<--- Make DOMCo
         cardCountElement.textContent = "Error loading cards.";
     }
   }
-  // --- End Task 1.31 ---
+  
 
 
   // Add listener for the save button
   if (saveButton) {
     console.log("Attempting to add click listener to save button...");
-    saveButton.addEventListener('click', async () => { // <<<--- Keep 'async'
+    saveButton.addEventListener('click', async () => { 
       console.log("Save Card button clicked!");
 
       const frontText = displayDiv?.textContent?.trim();
@@ -128,7 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => { // <<<--- Make DOMCo
         console.log("Attempting to save card...");
         const storageKey = 'flashcards';
         // Re-fetch before saving to ensure we have the absolute latest
-        // (Good practice if multiple popups could be open, though unlikely)
         const data = await chrome.storage.local.get(storageKey);
         const existingCards: Flashcard[] = data?.[storageKey] || [];
         console.log(`Found ${existingCards.length} existing cards before saving.`);

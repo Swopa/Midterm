@@ -29,6 +29,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Access lastSelectedText correctly
         console.log("!!! CS -> Sending back:", lastSelectedText);
         sendResponse({ text: lastSelectedText });
+        // Optional: Clear text after sending if you only want it retrieved once
         // lastSelectedText = null;
         return true;
     }

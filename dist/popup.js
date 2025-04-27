@@ -31,7 +31,6 @@ function updateDisplay(text) {
         console.error("Could not find the display element #selected-text-display");
     }
 }
-// --- Optional: Function to update card count display ---
 function updateCardCountDisplay() {
     if (cardCountElement) {
         cardCountElement.textContent = `Total Cards: ${loadedFlashcards.length}`;
@@ -87,14 +86,14 @@ function requestSelectedText() {
 document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, void 0, function* () {
     // Request the selected text when the popup loads
     requestSelectedText(); // Can run concurrently
-    // --- Task 1.31: Load existing cards ---
+    //load existing cards
     try {
         const storageKey = 'flashcards';
         console.log('Attempting to load cards from storage...');
         const data = yield chrome.storage.local.get(storageKey);
         loadedFlashcards = (data === null || data === void 0 ? void 0 : data[storageKey]) || []; // Assign to global variable
         console.log(`Loaded ${loadedFlashcards.length} cards successfully.`);
-        // --- Task 1.33: Initial display of card count ---
+        //display card count
         updateCardCountDisplay(); // Update display based on loaded cards
     }
     catch (error) {
@@ -103,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, vo
             cardCountElement.textContent = "Error loading cards.";
         }
     }
-    // --- End Task 1.31 ---
     // Add listener for the save button
     if (saveButton) {
         console.log("Attempting to add click listener to save button...");
@@ -131,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, vo
                 console.log("Attempting to save card...");
                 const storageKey = 'flashcards';
                 // Re-fetch before saving to ensure we have the absolute latest
-                // (Good practice if multiple popups could be open, though unlikely)
                 const data = yield chrome.storage.local.get(storageKey);
                 const existingCards = (data === null || data === void 0 ? void 0 : data[storageKey]) || [];
                 console.log(`Found ${existingCards.length} existing cards before saving.`);
@@ -163,5 +160,5 @@ document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, vo
         console.error("Save button NOT found when trying to add listener.");
     }
 })); // --- End of async DOMContentLoaded listener ---
-//export {};
+
 // export {}; // Keep commented out
