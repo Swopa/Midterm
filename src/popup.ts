@@ -16,6 +16,7 @@ const gestureOutputElement = document.getElementById('gesture-output');
 
 // Elements needed for Card Viewing (Adding back)
 const cardDisplayArea = document.getElementById('card-display-area');
+const cardStatusElement = document.getElementById('card-status-display');
 const cardFrontElement = document.getElementById('card-front');
 const cardBackElement = document.getElementById('card-back');
 const prevCardButton = document.getElementById('prev-card-button') as HTMLButtonElement | null;
@@ -31,6 +32,33 @@ let detector: handPoseDetection.HandDetector | null = null;
 let lastDetectedActionGesture: string = 'NONE';
 let gestureActionCooldown = false;
 const GESTURE_COOLDOWN_MS = 1500;
+
+function updateStatusDisplay(status: Flashcard['status']) { // Use the specific status type from Flashcard
+  if (!cardStatusElement) return; // Exit if element doesn't exist
+
+  const statusText = status || 'New'; // Default to 'New' if status is undefined
+
+  cardStatusElement.textContent = `Status: ${statusText}`;
+
+  // Optional: Change color based on status for better visual feedback
+  switch (statusText) {
+      case 'Easy':
+      case 'Mastered':
+          cardStatusElement.style.color = 'green';
+          break;
+      case 'Wrong':
+      case 'Difficult':
+          cardStatusElement.style.color = 'red';
+          break;
+      case 'Learning':
+          cardStatusElement.style.color = 'orange';
+          break;
+      case 'New':
+      default:
+          cardStatusElement.style.color = '#666'; // Default grey
+          break;
+  }
+}
 
 
 // --- Functions ---
@@ -158,6 +186,7 @@ function recognizeGesture(keypoints: handPoseDetection.Keypoint[]): string {
   }
 
   // Other gestures could be added here...
+  
 
   return 'NONE'; // (Checklist 2.22)
 }
@@ -199,11 +228,13 @@ async function detectHandsLoop() {
                               case 'THUMBS_UP':
                                   console.log(`Action: Mark card ${currentCardIndex} as 'Easy'`);
                                   currentCard.status = 'Easy'; // (Checklist 2.29)
+                                  updateStatusDisplay(currentCard.status);
                                   actionTaken = true;
                                   break;
                               case 'THUMBS_DOWN':
                                   console.log(`Action: Mark card ${currentCardIndex} as 'Wrong'`);
                                   currentCard.status = 'Wrong'; // (Checklist 2.29)
+                                  updateStatusDisplay(currentCard.status);
                                   actionTaken = true;
                                   break;
                               case 'PALM': // Use PALM to show answer or go next? Let's use for Next.
@@ -298,12 +329,13 @@ async function requestSelectedText() {
 // Display card in the viewer section (Adding back)
 function displayCardForReview(index: number) {
   console.log(`Attempting to display card at index: ${index}`);
-  if (!cardFrontElement || !cardBackElement) { console.error("Card display elements missing!"); return; }
+  if (!cardFrontElement || !cardBackElement || !cardStatusElement) { console.error("Card display elements missing!"); return; }
 
   if (loadedFlashcards.length === 0) {
     cardFrontElement.textContent = "(No cards saved)";
     cardBackElement.textContent = "";
     cardBackElement.style.display = 'none';
+    updateStatusDisplay(undefined);
     isBackVisible = false;
     if (showAnswerButton) showAnswerButton.textContent = "Show Answer";
     // Disable buttons if no cards?
@@ -324,11 +356,14 @@ function displayCardForReview(index: number) {
 
   const card = loadedFlashcards[index];
   currentCardIndex = index; // Update the current index state
+
   cardFrontElement.textContent = card.front;
   cardBackElement.textContent = card.back;
   cardBackElement.style.display = 'none'; // Always hide back initially
   isBackVisible = false;
   if (showAnswerButton) showAnswerButton.textContent = "Show Answer";
+
+  updateStatusDisplay(card.status);
 
   // Optional: Display status on the card?
   // cardFrontElement.textContent = `${card.front} [${card.status || 'New'}]`;

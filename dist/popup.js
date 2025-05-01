@@ -67184,6 +67184,7 @@ var cardCountElement = document.getElementById("card-count-display");
 var videoElement = document.getElementById("webcam");
 var gestureOutputElement = document.getElementById("gesture-output");
 var cardDisplayArea = document.getElementById("card-display-area");
+var cardStatusElement = document.getElementById("card-status-display");
 var cardFrontElement = document.getElementById("card-front");
 var cardBackElement = document.getElementById("card-back");
 var prevCardButton = document.getElementById("prev-card-button");
@@ -67195,6 +67196,28 @@ var isBackVisible = false;
 var detector = null;
 var gestureActionCooldown = false;
 var GESTURE_COOLDOWN_MS = 1500;
+function updateStatusDisplay(status) {
+  if (!cardStatusElement) return;
+  const statusText = status || "New";
+  cardStatusElement.textContent = `Status: ${statusText}`;
+  switch (statusText) {
+    case "Easy":
+    case "Mastered":
+      cardStatusElement.style.color = "green";
+      break;
+    case "Wrong":
+    case "Difficult":
+      cardStatusElement.style.color = "red";
+      break;
+    case "Learning":
+      cardStatusElement.style.color = "orange";
+      break;
+    case "New":
+    default:
+      cardStatusElement.style.color = "#666";
+      break;
+  }
+}
 async function startWebcam() {
   try {
     if (!videoElement) {
@@ -67324,11 +67347,13 @@ async function detectHandsLoop() {
                 case "THUMBS_UP":
                   console.log(`Action: Mark card ${currentCardIndex} as 'Easy'`);
                   currentCard.status = "Easy";
+                  updateStatusDisplay(currentCard.status);
                   actionTaken = true;
                   break;
                 case "THUMBS_DOWN":
                   console.log(`Action: Mark card ${currentCardIndex} as 'Wrong'`);
                   currentCard.status = "Wrong";
+                  updateStatusDisplay(currentCard.status);
                   actionTaken = true;
                   break;
                 case "PALM":
@@ -67402,7 +67427,7 @@ async function requestSelectedText() {
 }
 function displayCardForReview(index) {
   console.log(`Attempting to display card at index: ${index}`);
-  if (!cardFrontElement || !cardBackElement) {
+  if (!cardFrontElement || !cardBackElement || !cardStatusElement) {
     console.error("Card display elements missing!");
     return;
   }
@@ -67410,6 +67435,7 @@ function displayCardForReview(index) {
     cardFrontElement.textContent = "(No cards saved)";
     cardBackElement.textContent = "";
     cardBackElement.style.display = "none";
+    updateStatusDisplay(void 0);
     isBackVisible = false;
     if (showAnswerButton) showAnswerButton.textContent = "Show Answer";
     if (prevCardButton) prevCardButton.disabled = true;
@@ -67431,6 +67457,7 @@ function displayCardForReview(index) {
   cardBackElement.style.display = "none";
   isBackVisible = false;
   if (showAnswerButton) showAnswerButton.textContent = "Show Answer";
+  updateStatusDisplay(card.status);
   console.log(`Displaying card ${index + 1}/${loadedFlashcards.length} (Status: ${card.status || "New"})`);
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

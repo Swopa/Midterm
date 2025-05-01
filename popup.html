@@ -29,6 +29,12 @@
             background-color: #f0f8ff;
             cursor: pointer;
         }
+        #card-status-display {
+            font-size: 0.8em;
+            color: #666; /* Default color */
+            margin-top: 8px; /* Space below the front text */
+            font-style: italic;
+        }
          #card-back {
             display: none; /* Controlled by JS */
             margin-top: 10px; font-style: italic;
@@ -67,6 +73,7 @@
         <h2>Review Card</h2>
         <div id="card-display-area" title="Click to show/hide answer">
             <div id="card-front">(No card loaded)</div>
+            <div id="card-status-display"></div>
             <div id="card-back"></div>
         </div>
         <div id="card-navigation">
