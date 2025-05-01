@@ -3,24 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard Creator</title>
+    <title>Flashcard Review</title> <!-- Updated title -->
     <style>
-        /* Basic styling */
-        body { font-family: sans-serif; width: 300px; padding: 10px; }
-        #selected-text-display { min-height: 50px; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; background-color: #f9f9f9; white-space: pre-wrap; word-wrap: break-word; }
-        button { padding: 8px 15px; cursor: pointer; }
+        /* Combine styles from previous versions */
+        body { font-family: sans-serif; width: 350px; padding: 10px; }
+        button { padding: 8px 12px; cursor: pointer; margin-top: 5px; margin-right: 5px; font-size: 0.9em;}
+        h2 { margin-bottom: 5px; margin-top: 15px;}
+        hr { margin: 15px 0; }
+
+        /* Create Card Section */
+        #selected-text-display {
+            min-height: 50px; border: 1px solid #ccc; padding: 5px;
+            margin-bottom: 10px; background-color: #f9f9f9;
+            white-space: pre-wrap; word-wrap: break-word;
+        }
+
+        /* Card Count */
+        #card-count-display { font-size: 0.9em; color: #555; margin-bottom: 10px; }
+
+        /* Viewer Section */
+        #viewer-section { }
+        #card-display-area {
+            border: 1px dashed blue; padding: 15px; text-align: center;
+            font-size: 1.1em; min-height: 70px; margin-bottom: 10px;
+            background-color: #f0f8ff;
+            cursor: pointer;
+        }
+         #card-back {
+            display: none; /* Controlled by JS */
+            margin-top: 10px; font-style: italic;
+            color: #333; font-size: 1em;
+        }
+        #card-navigation { text-align: center; margin-top: 5px; }
+
+        /* Webcam Section */
+        #webcam { /* Video Element Styling - Use teammate's ID */
+            width: 100%; height: auto;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            transform: scaleX(-1); /* Flip video horizontally */
+            background-color: #eee;
+        }
+        #gesture-output {
+            margin-top: 10px; font-weight: bold; text-align: center;
+            min-height: 1.5em; color: #555;
+            border: 1px solid #ddd; padding: 4px; background-color: #f8f8f8;
+        }
     </style>
 </head>
 <body>
     <div id="card-count-display">Total Cards: 0</div>
     <hr>
-    <h1>Selected Text</h1>
+
+    <!-- Section for Creating Cards -->
+    <h2>Create Card</h2>
     <div id="selected-text-display">(No text selected yet)</div>
     <button id="save-button">Save as Flashcard Front</button>
+    <!-- End Create Card Section -->
     <hr>
+
+    <!-- Section for Viewing Cards -->
+    <div id="viewer-section">
+        <h2>Review Card</h2>
+        <div id="card-display-area" title="Click to show/hide answer">
+            <div id="card-front">(No card loaded)</div>
+            <div id="card-back"></div>
+        </div>
+        <div id="card-navigation">
+             <button id="prev-card-button" title="Previous Card">< Prev</button>
+             <button id="show-answer-button" title="Show/Hide Answer">Show Answer</button>
+             <button id="next-card-button" title="Next Card">Next ></button>
+        </div>
+    </div>
+     <!-- End Viewer Section -->
+    <hr>
+
+    <!-- Webcam Section -->
     <h2>Webcam Feed</h2>
     <video id="webcam" width="280" height="210" autoplay muted playsinline style="border: 1px solid #ccc;"></video>
     <div id="gesture-output" style="margin-top: 10px; font-weight: bold;">Gesture: (None)</div>
-    <script defer src="popup.js"></script>
+    <!-- End Webcam Section -->
+
+    <!-- IMPORTANT: Use type="module" because popup.ts now uses import -->
+    <script type="module" src="popup.js"></script>
 </body>
 </html>

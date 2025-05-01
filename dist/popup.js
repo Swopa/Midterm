@@ -8,181 +8,262 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 console.log("Popup script loaded!");
-// Get references to HTML elements early
+// --- References to HTML Elements ---
+// Elements from teammate's code (or assumed standard)
 const displayDiv = document.getElementById("selected-text-display");
 const saveButton = document.getElementById("save-button");
-// Example reference for card count display (ensure element exists in popup.html)
 const cardCountElement = document.getElementById('card-count-display');
-// --- Variable to hold loaded cards ---
-let loadedFlashcards = []; // Initialize as empty array
+const videoElement = document.getElementById("webcam"); // Match teammate's ID
+const gestureOutputElement = document.getElementById('gesture-output');
+// Elements needed for Card Viewing (Adding back)
+const cardDisplayArea = document.getElementById('card-display-area');
+const cardFrontElement = document.getElementById('card-front');
+const cardBackElement = document.getElementById('card-back');
+const prevCardButton = document.getElementById('prev-card-button');
+const showAnswerButton = document.getElementById('show-answer-button');
+const nextCardButton = document.getElementById('next-card-button');
+// --- State Variables ---
+let loadedFlashcards = []; // Holds all loaded cards - Use Flashcard[] type
+let currentCardIndex = 0; // Index of the card currently displayed
+let isBackVisible = false; // Tracks if the back of the card is shown
+// --- Functions ---
+// Webcam function from teammate (using 'videoElement' reference)
 function startWebcam() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const video = document.getElementById("webcam");
-            if (!video) {
+            if (!videoElement) {
                 console.error("Webcam video element not found!");
+                if (gestureOutputElement)
+                    gestureOutputElement.textContent = "Video element missing.";
                 return;
             }
+            console.log("Requesting webcam access..."); // Added log
+            if (gestureOutputElement)
+                gestureOutputElement.textContent = "Requesting access..."; // Update status
             const stream = yield navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            yield video.play();
+            videoElement.srcObject = stream;
+            yield videoElement.play(); // Ensure play is awaited or handled correctly
             console.log("Webcam feed started.");
+            if (gestureOutputElement) {
+                gestureOutputElement.textContent = "Webcam Active"; // Update status on success
+                gestureOutputElement.style.color = 'green';
+            }
         }
-        catch (err) {
+        catch (err) { // Catch specific errors
             console.error("Error accessing webcam:", err);
+            if (gestureOutputElement) {
+                let errorMsg = `Error: ${err.name || 'Unknown'}`;
+                if (err.name === 'NotAllowedError') {
+                    errorMsg = "Error: Camera permission denied/dismissed.";
+                }
+                else if (err.name === 'NotFoundError') {
+                    errorMsg = "Error: No camera found.";
+                }
+                gestureOutputElement.textContent = errorMsg;
+                gestureOutputElement.style.color = 'red';
+            }
         }
     });
 }
-document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, void 0, function* () {
-    // Existing logic...
-    requestSelectedText();
-    yield startWebcam(); // ✅ Start webcam feed here
-    // ...
-}));
-// Define updateDisplay function (for selected text)
+// Update "Create Card" display
 function updateDisplay(text) {
-    if (displayDiv) {
-        if (text) {
-            displayDiv.textContent = text;
-            console.log("Displayed text:", text);
-        }
-        else {
-            displayDiv.textContent = "(No text captured or error occurred)";
-            console.log("No recent text found or error occurred.");
-        }
+    if (!displayDiv)
+        return;
+    if (text) {
+        displayDiv.textContent = text;
     }
     else {
-        console.error("Could not find the display element #selected-text-display");
+        displayDiv.textContent = "(No text captured or error occurred)";
     }
+    console.log("Create Card display updated.");
 }
+// Update "Total Cards" display
 function updateCardCountDisplay() {
-    if (cardCountElement) {
+    if (cardCountElement)
         cardCountElement.textContent = `Total Cards: ${loadedFlashcards.length}`;
-    }
 }
-// Listener for IMMEDIATE updates (e.g., text selected while popup is open)
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Popup received message:", message);
-    if (message.type === "CONTENT_SCRIPT_SELECTION") {
-        updateDisplay(message.text);
-    }
-});
-// Function to request selected text when popup opens
+// Request selected text from content script
 function requestSelectedText() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
-        console.log("Popup requesting text from content script...");
+        console.log("Requesting selected text...");
         try {
             const tabs = yield chrome.tabs.query({ active: true, currentWindow: true });
-            console.log("Active tabs found:", tabs); // Debug log
-            if (tabs.length === 0) {
-                console.log("No active tab found.");
+            if (tabs.length === 0 || !((_a = tabs[0]) === null || _a === void 0 ? void 0 : _a.id)) {
+                console.log("No active tab.");
                 updateDisplay(null);
                 return;
             }
-            const activeTabId = (_a = tabs[0]) === null || _a === void 0 ? void 0 : _a.id;
-            console.log("Attempting to send to tab ID:", activeTabId); // Debug log
-            if (activeTabId) {
-                const response = yield chrome.tabs.sendMessage(activeTabId, {
-                    type: "POPUP_GET_SELECTED_TEXT"
-                });
-                console.log("Popup received response:", response); // Debug log
-                if (response && typeof response.text !== 'undefined') {
-                    updateDisplay(response.text);
-                }
-                else {
-                    console.log("Response from content script missing or invalid:", response);
-                    updateDisplay(null);
-                }
+            const activeTabId = tabs[0].id;
+            const response = yield chrome.tabs.sendMessage(activeTabId, { type: "POPUP_GET_SELECTED_TEXT" });
+            if (response === null || response === void 0 ? void 0 : response.text) {
+                updateDisplay(response.text);
             }
             else {
-                console.log("Could not get active tab ID.");
+                console.log("No text in response.");
                 updateDisplay(null);
             }
         }
         catch (error) {
-            console.error("Error caught during chrome.tabs.sendMessage or processing response:", error);
+            console.error("Error requesting text:", error);
             updateDisplay(null);
         }
     });
 }
-// --- Code that runs after the popup HTML is loaded ---
+// Display card in the viewer section (Adding back)
+function displayCardForReview(index) {
+    console.log(`Attempting to display card at index: ${index}`);
+    if (!cardFrontElement || !cardBackElement) {
+        console.error("Card display elements missing!");
+        return;
+    }
+    if (loadedFlashcards.length === 0) {
+        cardFrontElement.textContent = "(No cards saved)";
+        cardBackElement.textContent = "";
+        cardBackElement.style.display = 'none';
+        isBackVisible = false;
+        if (showAnswerButton)
+            showAnswerButton.textContent = "Show Answer";
+        return;
+    }
+    if (index < 0 || index >= loadedFlashcards.length) {
+        index = 0;
+    } // Wrap index
+    const card = loadedFlashcards[index];
+    currentCardIndex = index;
+    cardFrontElement.textContent = card.front;
+    cardBackElement.textContent = card.back;
+    cardBackElement.style.display = 'none'; // Always hide back initially
+    isBackVisible = false;
+    if (showAnswerButton)
+        showAnswerButton.textContent = "Show Answer";
+    console.log(`Displaying card ${index + 1}/${loadedFlashcards.length}`);
+}
+// --- Event Listeners ---
+// Listener for messages from content script (keep as is)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "CONTENT_SCRIPT_SELECTION") {
+        updateDisplay(message.text);
+    }
+});
+// Listener for when the popup's HTML is fully loaded
 document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, void 0, function* () {
-    // Request the selected text when the popup loads
-    requestSelectedText(); // Can run concurrently
-    //load existing cards
+    console.log('DOM Content Loaded.');
+    requestSelectedText(); // Request selected text for create section
+    // Start Webcam Feed (Using teammate's function)
+    // Note: This runs concurrently with card loading
+    startWebcam();
+    // Load existing flashcards
     try {
         const storageKey = 'flashcards';
-        console.log('Attempting to load cards from storage...');
+        console.log('Loading cards...');
         const data = yield chrome.storage.local.get(storageKey);
-        loadedFlashcards = (data === null || data === void 0 ? void 0 : data[storageKey]) || []; // Assign to global variable
-        console.log(`Loaded ${loadedFlashcards.length} cards successfully.`);
-        //display card count
-        updateCardCountDisplay(); // Update display based on loaded cards
+        loadedFlashcards = (data === null || data === void 0 ? void 0 : data[storageKey]) || []; // Use Flashcard[] type
+        console.log(`Loaded ${loadedFlashcards.length} cards.`);
+        updateCardCountDisplay();
+        // Display the first card in the viewer section (Adding back)
+        displayCardForReview(0);
     }
     catch (error) {
-        console.error("Error loading cards from chrome.storage.local:", error);
-        if (cardCountElement) { // Show error state in count display
+        console.error("Error loading cards:", error);
+        if (cardCountElement)
             cardCountElement.textContent = "Error loading cards.";
-        }
+        displayCardForReview(0); // Show empty state
     }
-    // Add listener for the save button
+    // --- Attach Listeners to Buttons ---
+    // Save Button Listener (keep as is, ensure Flashcard types are used)
     if (saveButton) {
-        console.log("Attempting to add click listener to save button...");
         saveButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
             console.log("Save Card button clicked!");
             const frontText = (_a = displayDiv === null || displayDiv === void 0 ? void 0 : displayDiv.textContent) === null || _a === void 0 ? void 0 : _a.trim();
-            // ... (keep front text validation) ...
-            if (!frontText || frontText === "(No text captured or error occurred)") { /* ... */
+            if (!frontText || frontText === "(No text captured or error occurred)") {
+                alert("Select text first!");
                 return;
             }
-            console.log("Captured Front Text:", frontText);
-            const backText = prompt("Enter the back of the flashcard for:", frontText);
-            // ... (keep back text validation) ...
-            if (backText === null) { /* ... */
+            const backText = prompt("Enter back of card:", frontText);
+            if (backText === null) {
+                console.log("User cancelled.");
                 return;
             }
             const trimmedBackText = backText.trim();
-            if (trimmedBackText === "") { /* ... */
+            if (trimmedBackText === "") {
+                alert("Back cannot be empty.");
                 return;
             }
-            console.log("Captured Back Text:", trimmedBackText);
-            // --- Save to Storage Logic ---
             try {
-                console.log("Attempting to save card...");
                 const storageKey = 'flashcards';
-                // Re-fetch before saving to ensure we have the absolute latest
                 const data = yield chrome.storage.local.get(storageKey);
-                const existingCards = (data === null || data === void 0 ? void 0 : data[storageKey]) || [];
-                console.log(`Found ${existingCards.length} existing cards before saving.`);
+                const existingCards = (data === null || data === void 0 ? void 0 : data[storageKey]) || []; // Use Flashcard[]
                 const newCard = {
                     id: `card-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-                    front: frontText,
-                    back: trimmedBackText,
-                    status: 'New',
+                    front: frontText, back: trimmedBackText, status: 'New',
                 };
-                console.log("Created new card:", newCard);
                 const updatedCards = [...existingCards, newCard];
                 yield chrome.storage.local.set({ [storageKey]: updatedCards });
-                console.log("Card saved successfully to storage!");
-                // *** Update local cache and display AFTER successful save ***
-                loadedFlashcards = updatedCards; // Update the variable holding cards
-                console.log('Updated local card cache. Count:', loadedFlashcards.length);
-                updateCardCountDisplay(); // Update the visual count
+                loadedFlashcards = updatedCards;
+                updateCardCountDisplay();
                 alert("Flashcard saved!");
             }
             catch (error) {
                 console.error("Error saving card:", error);
-                alert("Error saving flashcard.");
+                alert("Error saving.");
             }
-            // --- End Save Logic ---
-        })); // End of async click listener
-        console.log("Click listener added successfully to save button.");
+        }));
+        console.log("Save button listener added.");
     }
     else {
-        console.error("Save button NOT found when trying to add listener.");
+        console.error("Save button not found.");
     }
-})); // --- End of async DOMContentLoaded listener ---
+    // Show/Hide Answer Button Listener (Adding back)
+    if (showAnswerButton && cardBackElement) {
+        showAnswerButton.addEventListener('click', () => {
+            if (loadedFlashcards.length === 0)
+                return;
+            if (isBackVisible) {
+                cardBackElement.style.display = 'none';
+                showAnswerButton.textContent = 'Show Answer';
+                isBackVisible = false;
+            }
+            else {
+                cardBackElement.style.display = 'block';
+                showAnswerButton.textContent = 'Hide Answer';
+                isBackVisible = true;
+            }
+        });
+        console.log("Show Answer button listener added.");
+    }
+    else {
+        console.warn("Show Answer button or card back element not found.");
+    }
+    // Next Card Button Listener (Adding back)
+    if (nextCardButton) {
+        nextCardButton.addEventListener('click', () => {
+            if (loadedFlashcards.length > 0) {
+                let nextIndex = (currentCardIndex + 1) % loadedFlashcards.length;
+                displayCardForReview(nextIndex);
+            }
+        });
+        console.log("Next Card button listener added.");
+    }
+    else {
+        console.warn("Next Card button not found.");
+    }
+    // Previous Card Button Listener (Adding back)
+    if (prevCardButton) {
+        prevCardButton.addEventListener('click', () => {
+            if (loadedFlashcards.length > 0) {
+                let prevIndex = (currentCardIndex - 1 + loadedFlashcards.length) % loadedFlashcards.length;
+                displayCardForReview(prevIndex);
+            }
+        });
+        console.log("Prev Card button listener added.");
+    }
+    else {
+        console.warn("Previous Card button not found.");
+    }
+    // --- End Button Listeners ---
+}));
 
-// export {}; // Keep commented out
+// --- End DOMContentLoaded ---
+// No explicit export {} needed if import causes issues without type="module"

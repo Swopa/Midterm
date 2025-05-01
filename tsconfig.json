@@ -6,7 +6,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
-    "types": ["chrome"]
+    "types": ["chrome"],
+    "moduleResolution": "node", // <<< Important for finding modules in node_modules
+    "esModuleInterop": true,    // <<< Often helps with different module types
+    "allowSyntheticDefaultImports": true,
   },
   "include": ["src/**/*"]
 }
