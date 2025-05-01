@@ -11,6 +11,32 @@ const cardCountElement = document.getElementById('card-count-display');
 // --- Variable to hold loaded cards ---
 let loadedFlashcards: Flashcard[] = []; // Initialize as empty array
 
+async function startWebcam() {
+  try {
+    const video = document.getElementById("webcam") as HTMLVideoElement;
+    if (!video) {
+      console.error("Webcam video element not found!");
+      return;
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    await video.play();
+    console.log("Webcam feed started.");
+  } catch (err) {
+    console.error("Error accessing webcam:", err);
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Existing logic...
+  requestSelectedText();
+  await startWebcam(); // ✅ Start webcam feed here
+  // ...
+});
+
+
 // Define updateDisplay function (for selected text)
 function updateDisplay(text: string | null) {
   if (displayDiv) {

@@ -15,6 +15,30 @@ const saveButton = document.getElementById("save-button");
 const cardCountElement = document.getElementById('card-count-display');
 // --- Variable to hold loaded cards ---
 let loadedFlashcards = []; // Initialize as empty array
+function startWebcam() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const video = document.getElementById("webcam");
+            if (!video) {
+                console.error("Webcam video element not found!");
+                return;
+            }
+            const stream = yield navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            yield video.play();
+            console.log("Webcam feed started.");
+        }
+        catch (err) {
+            console.error("Error accessing webcam:", err);
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', () => __awaiter(void 0, void 0, void 0, function* () {
+    // Existing logic...
+    requestSelectedText();
+    yield startWebcam(); // ✅ Start webcam feed here
+    // ...
+}));
 // Define updateDisplay function (for selected text)
 function updateDisplay(text) {
     if (displayDiv) {
