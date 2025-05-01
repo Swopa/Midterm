@@ -5,7 +5,7 @@ export interface Flashcard {
     id: string;       // Unique identifier for the card (e.g., timestamp or UUID)
     front: string;      // The text for the front of the card (the selected text)
     back: string;       // The text for the back of the card (answer/definition)
-    status?: 'New' | 'Learning' | 'Mastered' | 'Difficult'; // Optional: Tracking review status
+    status?: 'New' | 'Learning' | 'Mastered' | 'Difficult' | 'Easy' | 'Wrong'; // Optional: Tracking review status
     lastReviewed?: number; // Optional: Timestamp of last review
     nextReview?: number;   // Optional: Timestamp for next scheduled review (for SRS)
   }
